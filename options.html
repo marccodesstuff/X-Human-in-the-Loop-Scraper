@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>X-OSINT Collector Options</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 12px; max-width: 720px; }
+      label { display: block; margin: 8px 0; }
+      input[type="text"], textarea { width: 100%; }
+    </style>
+  </head>
+  <body>
+    <h2>Options</h2>
+    <div>
+      <label>Webhook URL (n8n, Supabase, custom):
+        <input type="text" id="webhookUrl" placeholder="https://example.com/webhook" />
+      </label>
+      <label><input type="checkbox" id="webhookEnabled" /> Enable webhook forwarding</label>
+      <label><input type="checkbox" id="autoCollect" /> Auto-collect on page load</label>
+      <fieldset>
+        <legend>Page contexts to collect from</legend>
+        <label><input type="checkbox" class="ctx" value="timeline" /> Timeline</label>
+        <label><input type="checkbox" class="ctx" value="profile" /> Profile pages</label>
+        <label><input type="checkbox" class="ctx" value="search" /> Search results</label>
+        <label><input type="checkbox" class="ctx" value="list" /> Lists</label>
+        <label><input type="checkbox" class="ctx" value="bookmarks" /> Bookmarks</label>
+      </fieldset>
+      <label>Handle filter (comma-separated, empty = collect all):
+        <input type="text" id="handleFilter" placeholder="@user1,@user2" />
+      </label>
+      <label>Keyword filter (comma-separated, only collect tweets containing at least one):
+        <input type="text" id="keywordFilter" placeholder="keyword1,keyword2" />
+      </label>
+      <div style="margin-top:10px;">
+        <button id="save">Save</button>
+        <button id="restore">Restore defaults</button>
+      </div>
+      <div id="status" class="muted"></div>
+    </div>
+    <script src="options.js"></script>
+  </body>
+</html>

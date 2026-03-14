@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>X-OSINT Collector</title>
+    <style>
+      body { font-family: Arial, sans-serif; width: 360px; padding: 12px; }
+      button { margin: 6px 0; }
+      .tweet-preview { border-bottom: 1px solid #eee; padding: 6px 0; }
+      .muted { color: #666; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h3>X-OSINT Collector</h3>
+    <div>
+      <strong>Total collected:</strong> <span id="total">0</span>
+    </div>
+    <div>
+      <label><input type="checkbox" id="activeToggle" /> Active collection</label>
+    </div>
+    <div style="margin-top:8px;">
+      <button id="exportJson">Export as JSON</button>
+      <button id="exportCsv">Export as CSV</button>
+      <button id="clearDb">Clear Database</button>
+    </div>
+    <h4>Last 5 collected</h4>
+    <div id="last5"></div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
