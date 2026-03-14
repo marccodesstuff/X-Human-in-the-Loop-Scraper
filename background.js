@@ -153,7 +153,10 @@ function addToTotalCount(n) {
 
 function setBadge(count) {
   const text = count > 0 ? String(count) : '';
-  try { chrome.action.setBadgeText({ text }); } catch (e) { }
+  // Chrome MV3: chrome.action
+  try { if (chrome.action && chrome.action.setBadgeText) chrome.action.setBadgeText({ text }); } catch (e) { }
+  // Firefox / Chrome MV2 fallback: chrome.browserAction
+  try { if (chrome.browserAction && chrome.browserAction.setBadgeText) chrome.browserAction.setBadgeText({ text }); } catch (e) { }
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

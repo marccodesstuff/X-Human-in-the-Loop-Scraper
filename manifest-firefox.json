@@ -1,0 +1,36 @@
+{
+  "manifest_version": 2,
+  "name": "X-OSINT Collector (Firefox)",
+  "version": "0.1",
+  "description": "Collects tweet data passively from X/Twitter DOM during normal browsing. Firefox compatibility manifest.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "https://*.twitter.com/*",
+    "https://*.x.com/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "X-OSINT Collector"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.twitter.com/*", "*://*.x.com/*"],
+      "js": ["selectors.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "applications": {
+    "gecko": {
+      "id": "xosint@local",
+      "strict_min_version": "91.0"
+    }
+  }
+}
