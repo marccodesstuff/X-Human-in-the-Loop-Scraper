@@ -14,7 +14,7 @@
     time: 'time[datetime]',
 
     // Tweet text content: prefer data-testid when present, fallback to div[lang]
-    tweetText: 'div[data-testid="tweetText"], article div[lang]',
+    tweetText: 'div[data-testid="tweetText"], div[lang]',
 
     // Media: images and videos inside the article.
     image: 'img',
