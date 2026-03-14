@@ -13,6 +13,9 @@
     // Timestamp element with ISO datetime.
     time: 'time[datetime]',
 
+    // Tweet text content: prefer data-testid when present, fallback to div[lang]
+    tweetText: 'div[data-testid="tweetText"], article div[lang]',
+
     // Media: images and videos inside the article.
     image: 'img',
     video: 'video, video source',
