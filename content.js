@@ -17,13 +17,16 @@
     handleFilter: '',
     keywordFilter: ''
   };
+  // cache of notion handles (from background sync)
+  settings.notionHandles = [];
 
   function loadSettings() {
     chrome.storage.sync.get(settings, (items) => {
       settings = Object.assign(settings, items);
       // if autoCollect disabled, and storage/local 'active' flag is false, respect that
-      chrome.storage.local.get({ active: !!settings.autoCollect }, (local) => {
+      chrome.storage.local.get({ active: !!settings.autoCollect, notionHandles: [] }, (local) => {
         running = !!local.active;
+        settings.notionHandles = local.notionHandles || [];
       });
     });
   }
@@ -191,7 +194,13 @@
       if (!settings.contexts.includes(pageContext)) return null;
     }
     // Handle filter (exclusive)
-    if (settings.handleFilter && settings.handleFilter.trim()) {
+    // If Notion handles are present, use them as the exclusive source of truth
+    if (settings.notionHandles && settings.notionHandles.length) {
+      if (!authorHandle) return null;
+      const h = authorHandle.replace(/^@/, '').toLowerCase();
+      const ok = settings.notionHandles.some(x => x.replace(/^@/, '').toLowerCase() === h);
+      if (!ok) return null;
+    } else if (settings.handleFilter && settings.handleFilter.trim()) {
       const allowed = settings.handleFilter.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
       if (allowed.length && authorHandle) {
         const h = authorHandle.replace(/^@/, '').toLowerCase();

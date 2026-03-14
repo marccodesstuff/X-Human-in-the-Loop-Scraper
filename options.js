@@ -6,7 +6,10 @@ const defaults = {
   autoCollect: true,
   contexts: ['timeline','profile','search','list','bookmarks'],
   handleFilter: '',
-  keywordFilter: ''
+  keywordFilter: '',
+  notionEnabled: false,
+  notionApiKey: '',
+  notionDatabaseId: ''
 };
 
 function getFormValues() {
@@ -15,10 +18,13 @@ function getFormValues() {
   const autoCollect = document.getElementById('autoCollect').checked;
   const handleFilter = document.getElementById('handleFilter').value.trim();
   const keywordFilter = document.getElementById('keywordFilter').value.trim();
+  const notionEnabled = document.getElementById('notionEnabled').checked;
+  const notionApiKey = document.getElementById('notionApiKey').value.trim();
+  const notionDatabaseId = document.getElementById('notionDatabaseId').value.trim();
   const ctxEls = document.querySelectorAll('.ctx');
   const contexts = [];
   ctxEls.forEach(c => { if (c.checked) contexts.push(c.value); });
-  return { webhookUrl, webhookEnabled, autoCollect, handleFilter, keywordFilter, contexts };
+  return { webhookUrl, webhookEnabled, autoCollect, handleFilter, keywordFilter, contexts, notionEnabled, notionApiKey, notionDatabaseId };
 }
 
 function setFormValues(cfg) {
@@ -27,6 +33,9 @@ function setFormValues(cfg) {
   document.getElementById('autoCollect').checked = typeof cfg.autoCollect === 'undefined' ? true : !!cfg.autoCollect;
   document.getElementById('handleFilter').value = cfg.handleFilter || '';
   document.getElementById('keywordFilter').value = cfg.keywordFilter || '';
+  document.getElementById('notionEnabled').checked = !!cfg.notionEnabled;
+  document.getElementById('notionApiKey').value = cfg.notionApiKey || '';
+  document.getElementById('notionDatabaseId').value = cfg.notionDatabaseId || '';
   const ctxEls = document.querySelectorAll('.ctx');
   ctxEls.forEach(c => { c.checked = (cfg.contexts || []).includes(c.value); });
 }

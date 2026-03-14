@@ -15,6 +15,16 @@
       <label>Webhook URL (n8n, Supabase, custom):
         <input type="text" id="webhookUrl" placeholder="https://example.com/webhook" />
       </label>
+      <fieldset>
+        <legend>Notion integration</legend>
+        <label><input type="checkbox" id="notionEnabled" /> Enable Notion integration (periodic sync)</label>
+        <label>Notion Integration Key:
+          <input type="text" id="notionApiKey" placeholder="Paste internal integration key here" />
+        </label>
+        <label>Notion Database ID:
+          <input type="text" id="notionDatabaseId" placeholder="Database ID for 'OSINT Dashboard US/Israel vs Iran'" />
+        </label>
+      </fieldset>
       <label><input type="checkbox" id="webhookEnabled" /> Enable webhook forwarding</label>
       <label><input type="checkbox" id="autoCollect" /> Auto-collect on page load</label>
       <fieldset>

@@ -6,6 +6,78 @@ const STORE_NAME = 'tweets';
 
 let sessionCount = 0;
 
+// Notion sync settings and cached handles
+let notionHandles = [];
+
+async function fetchNotionHandlesOnce() {
+  try {
+    const cfg = await new Promise((res) => chrome.storage.sync.get({ notionEnabled: false, notionApiKey: '', notionDatabaseId: '' }, res));
+    if (!cfg.notionEnabled || !cfg.notionApiKey || !cfg.notionDatabaseId) return;
+    const url = `https://api.notion.com/v1/databases/${cfg.notionDatabaseId}/query`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + cfg.notionApiKey,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ page_size: 100 })
+    });
+    if (!resp.ok) throw new Error('Notion fetch failed ' + resp.status);
+    const data = await resp.json();
+    const pages = data.results || [];
+    const handles = [];
+    for (const p of pages) {
+      // Try to extract a property named "Handle"
+      const props = p.properties || {};
+      if (props.Handle) {
+        const prop = props.Handle;
+        let val = '';
+        // Handle could be rich_text or title or people etc.
+        if (prop.type === 'rich_text' && prop.rich_text && prop.rich_text.length) {
+          val = prop.rich_text.map(t => t.plain_text).join('');
+        } else if (prop.type === 'title' && prop.title && prop.title.length) {
+          val = prop.title.map(t => t.plain_text).join('');
+        } else if (prop.type === 'url' && prop.url) {
+          val = prop.url;
+        }
+        if (val) {
+          // normalize: extract handle from url or text
+          let h = val.trim();
+          if (h.includes('twitter.com') || h.includes('x.com')) {
+            try { const u = new URL(h); const parts = u.pathname.split('/').filter(Boolean); if (parts.length) h = parts[0]; } catch (e) {}
+          }
+          h = h.replace(/^@/, '').toLowerCase();
+          if (h) handles.push('@' + h);
+        }
+      }
+      // fallback: try to find a property that looks like a handle
+      else {
+        for (const k of Object.keys(props)) {
+          const prop = props[k];
+          if (prop && (prop.type === 'rich_text' || prop.type === 'title')) {
+            const text = (prop.rich_text || prop.title || []).map(t => t.plain_text).join('');
+            if (text && /@?[A-Za-z0-9_\-]{1,15}/.test(text)) {
+              const m = text.match(/@?([A-Za-z0-9_\-]{1,15})/);
+              if (m) handles.push('@' + m[1].toLowerCase());
+            }
+          }
+        }
+      }
+    }
+    // dedupe
+    const uniq = Array.from(new Set(handles));
+    notionHandles = uniq;
+    chrome.storage.local.set({ notionHandles: uniq });
+  } catch (e) {
+    console.error('Notion sync error', e);
+  }
+}
+
+// Kick off Notion syncing every 5 minutes
+setInterval(() => { fetchNotionHandlesOnce(); }, 5 * 60 * 1000);
+fetchNotionHandlesOnce();
+
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
