@@ -103,10 +103,10 @@
       if (statusIdx >= 0 && statusIdx + 1 < parts.length) {
         const canonicalPath = '/' + parts.slice(0, statusIdx + 2).join('/');
         const handlePart = statusIdx > 0 ? parts[statusIdx - 1] : '';
-        const validHandle = /^[A-Za-z0-9_]{1,15}$/.test(handlePart);
+        const isValidHandle = /^[A-Za-z0-9_]{1,15}$/.test(handlePart);
         return {
           url: u.origin + canonicalPath,
-          authorHandle: validHandle ? '@' + handlePart : ''
+          authorHandle: isValidHandle ? '@' + handlePart : ''
         };
       }
       return { url: u.origin + u.pathname, authorHandle: '' };
@@ -176,13 +176,17 @@
       const tweetTextSelector = S.tweetText || 'div[data-testid="tweetText"], div[lang]';
       const textEls = article.querySelectorAll(tweetTextSelector);
       const chunks = [];
+      const seenChunks = new Set();
       textEls.forEach((el) => {
         if (el.closest('article') !== article) return;
         const t = getTextContentOrEmpty(el);
-        if (t) chunks.push(t);
+        if (t && !seenChunks.has(t)) {
+          chunks.push(t);
+          seenChunks.add(t);
+        }
       });
       if (chunks.length) {
-        text = Array.from(new Set(chunks)).join('\n').trim();
+        text = chunks.join('\n').trim();
       } else if (timeEl) {
         text = article.innerText || '';
         if (authorHandle) text = text.replace(authorHandle, '');
