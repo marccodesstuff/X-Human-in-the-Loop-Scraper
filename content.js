@@ -94,29 +94,64 @@
     return el ? el.innerText.trim() : '';
   }
 
+  function parseTweetInfoFromUrl(rawUrl) {
+    if (!rawUrl) return { url: '', authorHandle: '' };
+    try {
+      const u = new URL(rawUrl, location.origin);
+      const parts = u.pathname.split('/').filter(Boolean);
+      const statusIdx = parts.indexOf('status');
+      if (statusIdx >= 0 && statusIdx + 1 < parts.length) {
+        const canonicalPath = '/' + parts.slice(0, statusIdx + 2).join('/');
+        const handlePart = statusIdx > 0 ? parts[statusIdx - 1] : '';
+        const validHandle = /^[A-Za-z0-9_]{1,15}$/.test(handlePart);
+        return {
+          url: u.origin + canonicalPath,
+          authorHandle: validHandle ? '@' + handlePart : ''
+        };
+      }
+      return { url: u.origin + u.pathname, authorHandle: '' };
+    } catch (e) {
+      const clean = String(rawUrl).split('?')[0];
+      return { url: clean, authorHandle: '' };
+    }
+  }
+
   // Extract tweet data from an <article> element
   function extractFromArticle(article) {
-    // Find tweet link (href with /status/)
-    const linkEl = article.querySelector(S.tweetLink || 'a[href*="/status/"]');
+    // Timestamp
+    const timeEl = article.querySelector(S.time || 'time[datetime]');
+
+    // Find canonical tweet permalink (prefer the anchor wrapping the timestamp)
+    let linkEl = timeEl ? timeEl.closest('a[href*="/status/"]') : null;
+    if (!linkEl) {
+      const candidates = article.querySelectorAll(S.tweetLink || 'a[href*="/status/"]');
+      for (const c of candidates) {
+        if (c.closest('article') === article) {
+          linkEl = c;
+          break;
+        }
+      }
+      if (!linkEl && candidates.length) linkEl = candidates[0];
+    }
     if (!linkEl) return null;
-    const rawUrl = linkEl.href;
-    if (!rawUrl || !rawUrl.includes('/status/')) return null;
-    const url = rawUrl.split('?')[0];
+    const parsedUrl = parseTweetInfoFromUrl(linkEl.href);
+    const url = parsedUrl.url;
+    if (!url || !url.includes('/status/')) return null;
 
     if (seen.has(url)) return null;
 
-    // Timestamp
-    const timeEl = article.querySelector(S.time || 'time[datetime]');
     const timestamp = timeEl && timeEl.getAttribute('datetime') ? new Date(timeEl.getAttribute('datetime')).toISOString() : null;
 
     // Author handle: try to find an element whose text starts with @ inside the article
-    let authorHandle = '';
+    let authorHandle = parsedUrl.authorHandle || '';
     const textNodes = article.querySelectorAll('*');
-    for (const node of textNodes) {
-      const t = node.innerText;
-      if (t && t.trim().startsWith('@')) {
-        authorHandle = t.trim().split(/\s+/)[0];
-        break;
+    if (!authorHandle) {
+      for (const node of textNodes) {
+        const t = node.innerText;
+        if (t && t.trim().startsWith('@')) {
+          authorHandle = t.trim().split(/\s+/)[0];
+          break;
+        }
       }
     }
 
@@ -138,11 +173,18 @@
     // Tweet text: combine text nodes inside the article but avoid headers/handles
     let text = '';
     try {
-      // Prefer timeEl parent region for the tweet body, else fallback to article innerText
-      if (timeEl) {
-        // The tweet text is often in the same article but not in the time element; get article text and remove author parts
+      const tweetTextSelector = S.tweetText || 'div[data-testid="tweetText"], div[lang]';
+      const textEls = article.querySelectorAll(tweetTextSelector);
+      const chunks = [];
+      textEls.forEach((el) => {
+        if (el.closest('article') !== article) return;
+        const t = getTextContentOrEmpty(el);
+        if (t) chunks.push(t);
+      });
+      if (chunks.length) {
+        text = Array.from(new Set(chunks)).join('\n').trim();
+      } else if (timeEl) {
         text = article.innerText || '';
-        // Remove handle and authorName occurrences to get closer to tweet text
         if (authorHandle) text = text.replace(authorHandle, '');
         if (authorName) text = text.replace(authorName, '');
         text = text.replace(/\n+/g, ' ').trim();
