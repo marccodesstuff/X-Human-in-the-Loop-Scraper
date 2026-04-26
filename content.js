@@ -3,6 +3,7 @@
 
 (function () {
   const S = window.XOSINT_SELECTORS || {};
+  const MAX_TWITTER_HANDLE_LENGTH = 15;
 
   let running = true;
   let seen = new Set(); // dedupe by URL for this content session
@@ -94,6 +95,7 @@
     return el ? el.innerText.trim() : '';
   }
 
+  // Parse a status URL and return canonical URL plus author handle (if present).
   function parseTweetInfoFromUrl(rawUrl) {
     if (!rawUrl) return { url: '', authorHandle: '' };
     try {
@@ -103,7 +105,7 @@
       if (statusIdx >= 0 && statusIdx + 1 < parts.length) {
         const canonicalPath = '/' + parts.slice(0, statusIdx + 2).join('/');
         const handlePart = statusIdx > 0 ? parts[statusIdx - 1] : '';
-        const isValidHandle = /^[A-Za-z0-9_]{1,15}$/.test(handlePart);
+        const isValidHandle = new RegExp(`^[A-Za-z0-9_]{1,${MAX_TWITTER_HANDLE_LENGTH}}$`).test(handlePart);
         return {
           url: u.origin + canonicalPath,
           authorHandle: isValidHandle ? '@' + handlePart : ''
@@ -144,9 +146,9 @@
 
     // Author handle: try to find an element whose text starts with @ inside the article
     let authorHandle = parsedUrl.authorHandle || '';
-    const textNodes = article.querySelectorAll('*');
+    const allElements = article.querySelectorAll('*');
     if (!authorHandle) {
-      for (const node of textNodes) {
+      for (const node of allElements) {
         const t = node.innerText;
         if (t && t.trim().startsWith('@')) {
           authorHandle = t.trim().split(/\s+/)[0];
